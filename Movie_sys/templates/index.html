@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<p>{{ movies|length }} Movies</p>
+
+<form method="post">
+    Name <input type="text" name="title" autocomplete="off" required>
+    Year(DD/MM/YYYY) <input type="text" name="year" autocomplete="off">
+    <input class="btn" type="submit" name="search" value="Search">
+</form>
+<table>
+    <thead>
+        <tr>
+            <th>Movie Name</th>
+            <th>Release Date</th>
+            <th>Type</th>
+            <th>Actor Names</th>
+            <th>Country</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for movie in movies %}
+            <tr>
+                <td>{{ movie['movie_name'] }}</td>
+                <td>{{ movie['release_date'] }}</td>
+                <td>{{ movie['type'] }}</td>
+                <td>{{ movie['actor_names'] }}</td>
+                <td>{{ movie['movie_info_country'] }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+    <!--<img alt="Walking Totoro" class="totoro" src="{{ url_for('static', filename='images/totoro.gif') }}" title="to~to~ro~">-->
+{% endblock %}
