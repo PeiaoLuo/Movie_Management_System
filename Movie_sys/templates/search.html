@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+    label {
+        display: inline-block;
+        width: 120px; /* Adjust the width as needed */
+    }
+
+    input {
+        margin-bottom: 10px; /* Adjust the spacing between input boxes */
+    }
+</style>
+
+<form method="post">
+    <label for="movie_name">Movie_name</label>
+    <input type="text" name="movie_name" autocomplete="off">
+
+    <label for="year">Year</label>
+    <input type="text" name="year" autocomplete="off">
+
+    <label for="movie_country">Movie_country</label>
+    <input type="text" name="movie_country" autocomplete="off"><br>
+
+    <label for="type">Type</label>
+    <input type="text" name="type" autocomplete="off">
+
+    <label for="director">Director</label>
+    <input type="text" name="director" autocomplete="off">
+
+    <label for="main_actor">Actor</label>
+    <input type="text" name="main_actor" autocomplete="off"><br>
+
+    <input class="btn" type="submit" name="submit" value="Search">
+
+</form>
+
+
+{% endblock %}
