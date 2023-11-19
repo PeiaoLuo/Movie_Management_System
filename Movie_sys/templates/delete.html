@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+    label {
+        display: inline-block;
+        width: 150px; /* Adjust the width as needed */
+    }
+
+    input {
+        margin-bottom: 10px; /* Adjust the spacing between input boxes */
+    }
+</style>
+
+<form method="post">
+    <label for="movie_name">Movie_name</label>
+    <input type="text" name="movie_name" autocomplete="on">
+
+    <label for="year">Year</label>
+    <input type="text" name="year" autocomplete="on">
+
+    <label for="movie_country">Movie_country</label>
+    <input type="text" name="movie_country" autocomplete="on"><br>
+
+    <label for="type">Type</label>
+    <input type="text" name="type" autocomplete="on">
+
+    <label for="box">Box</label>
+    <input type="text" name="box" autocomplete="on">
+
+    <label for="release_date">DD/MM/YYYY</label>
+    <input type="text" name="release_date" autocomplete="on"><br>
+
+    <label for="actor_name">Actor(A,B,C)</label>
+    <input type="text" name="actor_name" autocomplete="on">
+
+    <label for="actor_country">Actor_country(A,B,C)</label>
+    <input type="text" name="actor_country" autocomplete="on">
+
+    <label for="actor_sex">Sex(男,女,未知)</label>
+    <input type="text" name="actor_sex" autocomplete="on"><br>
+
+    <label for="dir_name">Director(A,B,C)</label>
+    <input type="text" name="dir_name" autocomplete="on">
+
+    <label for="dir_country">Dir_country(A,B,C)</label>
+    <input type="text" name="dir_country" autocomplete="on">
+
+    <label for="dir_sex">Dir_sex</label>
+    <input type="text" name="dir_sex" autocomplete="on"><br>
+
+    <input class="btn" type="submit" name="submit" value="n">
+
+</form>
+
+
+{% endblock %}

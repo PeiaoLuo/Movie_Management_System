@@ -41,7 +41,6 @@ def index():
     result = result_proxy.fetchall()
     columns = result_proxy.keys()
 
-    # Close the connection
     connection.close()
 
     # Convert each RowProxy to a dictionary
@@ -97,7 +96,7 @@ def search():
         filtered_dict.popitem()
         if filtered_dict == {}:
             flash('Please at least input one information.')
-            redirect(url_for('search'))
+            return redirect(url_for('search'))
 
         # Initialize a boolean mask
         mask = pd.Series([True] * len(info), index=info.index)
@@ -122,7 +121,7 @@ def add():
         #---------------------create movie_info row--------------------------
         if Movie_info.query.filter_by(movie_name=form_data['movie_name']).first() is not None:
             flash('Movie existed!')
-            redirect(url_for('add'))
+            return redirect(url_for('add'))
         last_movie = (
             Movie_info.query
             .order_by(cast(Movie_info.movie_id, Integer).desc())
@@ -153,7 +152,7 @@ def add():
         sex_ls = re.split(r',|，', form_data['actor_sex'])
         if not len(actor_ls) == len(country_ls) == len(sex_ls):
             flash('Actor information mismatch, please check actor\'s name, country, sex input.')
-            redirect(url_for('add'))
+            return redirect(url_for('add'))
         #---------------------get actor_info--------------------------
         
         #---------------------get director_info--------------------------
@@ -162,7 +161,7 @@ def add():
         dir_sex_ls = re.split(r',|，', form_data['dir_sex'])
         if not len(dir_ls) == len(dir_country_ls) == len(dir_sex_ls):
             flash('Director information mismatch, please check director\'s name, country, sex input.')
-            redirect(url_for('add'))
+            return redirect(url_for('add'))
         #---------------------get director_info--------------------------
         
         #---------------------create movie_box row--------------------------
@@ -220,9 +219,55 @@ def add():
                                                         relation_type="导演")
             last_relation_id += 1
             db.session.add(movie_actor_relation)
-            
+        # commit change
         db.session.commit()
         flash('Movie added.')
         redirect(url_for('add'))
 
     return render_template('add.html')
+
+@app.route('/delete',methods=["POST"])
+def delete():
+    movie_name = request.form['movie_name']
+    movie = Movie_info.query.filter_by(movie_name=movie_name).first()
+    if movie:
+        movie_id = movie.movie_id
+    else:
+        flash('No such movie in the system.')
+        return redirect(url_for('index'))
+
+    movie_box = Movie_box.query.filter_by(movie_id=movie_id).first()
+    #--------------get the rows of relation_info and actor_id to remove---------------------
+    #get the actor_id that need to be removed
+    all_actors = (
+        Movie_actor_relation.query
+        .with_entities(Movie_actor_relation.actor_id)
+        .all()
+    )
+    all_actor_ids = [actor.actor_id for actor in all_actors]
+    unique_actor_ids = [actor_id for actor_id in set(all_actor_ids) if all_actor_ids.count(actor_id) == 1]
+    
+    actors_in_movie = (
+        Movie_actor_relation.query
+        .filter_by(movie_id=movie_id)
+        .all()
+    )
+    all_actor_ids_in_movie = set([actor.actor_id for actor in actors_in_movie])
+    actor_ids_to_remove = [id for id in all_actor_ids_in_movie if id in unique_actor_ids]
+    #--------------get the rows of relation_info and actor_id to remove---------------------
+    
+    db.session.delete(movie)
+    db.session.delete(movie_box)
+    for relation in actors_in_movie:
+        db.session.delete(relation)
+        
+    #--------------delete actor_info rows--------------------
+    if actor_ids_to_remove != []:
+        for actor_id in actor_ids_to_remove:
+            actor = Actor_info.query.filter_by(actor_id=actor_id).first()
+            db.session.delete(actor)
+    #--------------delete actor_info rows--------------------
+    
+    db.session.commit()
+    flash('Movie deleted')
+    return redirect(url_for('index'))

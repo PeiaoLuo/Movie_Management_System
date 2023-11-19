@@ -21,9 +21,27 @@
             <li><a href="{{ url_for('index') }}">Home</a></li>
             <li><a href="{{ url_for('search') }}">Advanced Search</a></li>
             <li><a href="{{ url_for('add') }}">Add Movie</a></li>
+            <li><a href="#" onclick="toggleForm()">Delete Movie</a></li>
         </ul>
     </nav>
+    
+    <div class="hidden-form" id="deleteForm">
+        <form method="post" action="{{ url_for('delete') }}">
+            <label for="movie_name">Movie_name</label><br><br>
+            <input type="text" name="movie_name" autocomplete="off">
+            <input class="btn" type="submit" name="submit" value="Submit">
+        </form>
+    </div>
+    
+
     {% block content %}{% endblock %}
+
+    <script>
+        function toggleForm() {
+            var form = document.getElementById('deleteForm');
+            form.style.display = (form.style.display === 'none') ? 'block' : 'none';
+        }
+    </script>
 </body>
 <footer>
     This is for homework of SQL class
