@@ -92,7 +92,7 @@ def search():
         for key, value in request.form.items():
             form_data[key] = value
             
-        filtered_dict = {key: value for key, value in form_data.items() if value is not ""}
+        filtered_dict = {key: value for key, value in form_data.items() if value != ""}
         filtered_dict.popitem()
         if filtered_dict == {}:
             flash('Please at least input one information.')
@@ -129,8 +129,11 @@ def add():
         )
         new_movie_id = str(int(last_movie.movie_id)+1)
         date_string = form_data['release_date']
-        parsed_date = datetime.strptime(date_string, '%d/%m/%Y').date()
-        
+        if date_string:
+            parsed_date = datetime.strptime(date_string, '%d/%m/%Y').date()
+        else:
+            parsed_date = date_string
+            
         movie_info = Movie_info(movie_id=new_movie_id,
                                 movie_name=form_data['movie_name'],
                                 release_date=parsed_date,
