@@ -129,17 +129,24 @@ def add():
         )
         new_movie_id = str(int(last_movie.movie_id)+1)
         date_string = form_data['release_date']
+        
+        #if date is "" , date=none
+        if form_data['year'] != "":
+            year = int(form_data['year'])
+        else:
+            year = None
+            
         if date_string:
             parsed_date = datetime.strptime(date_string, '%d/%m/%Y').date()
         else:
-            parsed_date = date_string
+            parsed_date = None
             
         movie_info = Movie_info(movie_id=new_movie_id,
                                 movie_name=form_data['movie_name'],
                                 release_date=parsed_date,
                                 country=form_data['movie_country'],
                                 type=form_data['type'],
-                                year=int(form_data['year']))
+                                year=year)
 
         #---------------------create movie_info row--------------------------
         
@@ -168,8 +175,13 @@ def add():
         #---------------------get director_info--------------------------
         
         #---------------------create movie_box row--------------------------
+        if form_data['box'] != "":
+            box = float(form_data['box'])
+        else:
+            box = None
+            
         movie_box = Movie_box(movie_id=new_movie_id,
-                              box=float(form_data['box']))
+                              box=box)
         #---------------------create movie_box row--------------------------
         
         #---------------------get relationship--------------------------
@@ -185,43 +197,51 @@ def add():
         db.session.add(movie_info)
         db.session.add(movie_box)
         #add actor_info and relation
-        for i in range(len(actor_ls)):
-            actor = Actor_info.query.filter_by(actor_name=actor_ls[i]).first()
-            if actor is not None:
-                relation_actor_id = actor.actor_id
-            else:
-                actor_info = Actor_info(actor_id=str(last_actor_id+1),
-                                        actor_name=actor_ls[i],
-                                        gender=sex_ls[i],
-                                        country=country_ls[i])
-                db.session.add(actor_info)
-                last_actor_id += 1
-                relation_actor_id = last_actor_id
-            movie_actor_relation = Movie_actor_relation(id=str(last_relation_id+1),
-                                                        movie_id=new_movie_id,
-                                                        actor_id=relation_actor_id,
-                                                        relation_type="主演")
-            last_relation_id += 1
-            db.session.add(movie_actor_relation)                   
+        if len(actor_ls) > 0:
+            for i in range(len(actor_ls)):
+                #check if the actor existed
+                actor = Actor_info.query.filter_by(actor_name=actor_ls[i]).first()
+                if actor is not None:
+                    relation_actor_id = actor.actor_id
+                else:
+                    #if not existed add actor_info
+                    actor_info = Actor_info(actor_id=str(last_actor_id+1),
+                                            actor_name=actor_ls[i],
+                                            gender=sex_ls[i],
+                                            country=country_ls[i])
+                    db.session.add(actor_info)
+                    last_actor_id += 1
+                    relation_actor_id = last_actor_id
+                #add relation
+                movie_actor_relation = Movie_actor_relation(id=str(last_relation_id+1),
+                                                            movie_id=new_movie_id,
+                                                            actor_id=relation_actor_id,
+                                                            relation_type="主演")
+                last_relation_id += 1
+                db.session.add(movie_actor_relation)                   
         #add director_info and relation 
-        for i in range(len(dir_ls)):
-            director = Actor_info.query.filter_by(actor_name=dir_ls[i]).first()
-            if director is not None:
-                relation_director_id = director.actor_id
-            else:
-                director_info = Actor_info(actor_id=str(last_actor_id+1),
-                                        actor_name=dir_ls[i],
-                                        gender=dir_sex_ls[i],
-                                        country=dir_country_ls[i])
-                db.session.add(director_info)
-                last_actor_id += 1
-                relation_director_id = last_actor_id
-            movie_actor_relation = Movie_actor_relation(id=str(last_relation_id+1),
-                                                        movie_id=new_movie_id,
-                                                        actor_id=relation_director_id,
-                                                        relation_type="导演")
-            last_relation_id += 1
-            db.session.add(movie_actor_relation)
+        if len(dir_ls) > 0:
+            for i in range(len(dir_ls)):
+                #check if director existed
+                director = Actor_info.query.filter_by(actor_name=dir_ls[i]).first()
+                if director is not None:
+                    relation_director_id = director.actor_id
+                else:
+                    #if not existed, add actor_info
+                    director_info = Actor_info(actor_id=str(last_actor_id+1),
+                                            actor_name=dir_ls[i],
+                                            gender=dir_sex_ls[i],
+                                            country=dir_country_ls[i])
+                    db.session.add(director_info)
+                    last_actor_id += 1
+                    relation_director_id = last_actor_id
+                #add relation
+                movie_actor_relation = Movie_actor_relation(id=str(last_relation_id+1),
+                                                            movie_id=new_movie_id,
+                                                            actor_id=relation_director_id,
+                                                            relation_type="导演")
+                last_relation_id += 1
+                db.session.add(movie_actor_relation)
         # commit change
         db.session.commit()
         flash('Movie added.')

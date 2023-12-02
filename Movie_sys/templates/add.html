@@ -5,17 +5,35 @@
 <style>
     label {
         display: inline-block;
-        width: 150px; /* Adjust the width as needed */
+        width: 150px;
     }
 
     input {
-        margin-bottom: 10px; /* Adjust the spacing between input boxes */
+        margin-bottom: 10px;
     }
+
+    input:required:invalid {
+        border-color: orange;
+     }
+  
+     input + span {
+        display: none;
+        position: relative;
+     }
+  
+     input:required:invalid + span::before {
+        content: "This field is required";
+        color: red;
+        display: block;
+        position: absolute;
+        z-index: 1;
+        top: -1.5em;
+     }
 </style>
 
 <form method="post">
     <label for="movie_name">Movie_name</label>
-    <input type="text" name="movie_name" autocomplete="on">
+    <input type="text" name="movie_name" autocomplete="on" required placeholder="REQUIRED">
 
     <label for="year">Year</label>
     <input type="text" name="year" autocomplete="on">
