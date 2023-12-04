@@ -74,41 +74,90 @@ def search():
         movie_info.movie_id, movie_info.movie_name, movie_info.release_date, 
         movie_info.country, movie_info.type, movie_info.year, movie_box.box;
     """)
-
+    sql_query_actor = text("""
+        SELECT
+            a.actor_id,
+            a.actor_name AS actor_name,
+            a.country AS actor_country,
+            a.gender,
+            GROUP_CONCAT(DISTINCT CASE WHEN mar.relation_type = '导演' THEN m.movie_name END) AS directed_movies,
+            COALESCE(SUM(CASE WHEN mar.relation_type = '导演' THEN mb.box END), 0) AS total_box_directed,
+            COALESCE(SUM(CASE WHEN mar.relation_type = '导演' THEN mb.box END), 0) / COUNT(DISTINCT CASE WHEN mar.relation_type = '导演' THEN m.movie_id END) AS mean_box_directed,
+            COALESCE(VARIANCE(CASE WHEN mar.relation_type = '导演' THEN mb.box END), 0) AS variance_box_directed,
+            GROUP_CONCAT(DISTINCT CASE WHEN mar.relation_type != '导演' THEN m.movie_name END) AS acted_movies,
+            COALESCE(SUM(CASE WHEN mar.relation_type != '导演' THEN mb.box END), 0) AS total_box_acted,
+            COALESCE(SUM(CASE WHEN mar.relation_type != '导演' THEN mb.box END), 0) / COUNT(DISTINCT CASE WHEN mar.relation_type != '导演' THEN m.movie_id END) AS mean_box_acted,
+            COALESCE(VARIANCE(CASE WHEN mar.relation_type != '导演' THEN mb.box END), 0) AS variance_box_acted,
+            COALESCE(SUM(DISTINCT mb.box), 0) AS total_box_all,
+            COALESCE(SUM(DISTINCT mb.box), 0) / COUNT(DISTINCT m.movie_id) AS mean_box_all,
+            COALESCE(VARIANCE(mb.box), 0) AS variance_box_all
+        FROM
+            actor_info a
+        LEFT JOIN
+            movie_actor_relation mar ON a.actor_id = mar.actor_id
+        LEFT JOIN
+            movie_info m ON mar.movie_id = m.movie_id
+        LEFT JOIN
+            movie_box mb ON m.movie_id = mb.movie_id
+        GROUP BY
+            a.actor_id, a.actor_name, a.country, a.gender;
+    """)
     # Execute the query and fetch the result
     result_proxy = connection.execute(sql_query)
     result = result_proxy.fetchall()
     columns = result_proxy.keys()
 
+    result_proxy_actor = connection.execute(sql_query_actor)
+    result_actor = result_proxy_actor.fetchall()
+    columns_actor = result_proxy_actor.keys()
     # Close the connection
     connection.close()
 
     # Convert each RowProxy to a dictionary
     result = [dict(zip(columns, row)) for row in result]
+    result_actor = [dict(zip(columns_actor, row)) for row in result_actor]
+    
     info = pd.DataFrame(result).astype(str)
+    info_actor = pd.DataFrame(result_actor).astype(str)
     
     if request.method == "POST":
-        form_data = {}
-        for key, value in request.form.items():
-            form_data[key] = value
-            
-        filtered_dict = {key: value for key, value in form_data.items() if value != ""}
-        filtered_dict.popitem()
-        if filtered_dict == {}:
-            flash('Please at least input one information.')
-            return redirect(url_for('search'))
+        if 'submit_movie' in request.form:
+            form_data = {}
+            for key, value in request.form.items():
+                form_data[key] = value
+                
+            filtered_dict = {key: value for key, value in form_data.items() if value != ""}
+            filtered_dict.popitem()
+            if filtered_dict == {}:
+                flash('Please at least input one information.')
+                return redirect(url_for('search'))
 
-        # Initialize a boolean mask
-        mask = pd.Series([True] * len(info), index=info.index)
+            # Initialize a boolean mask
+            mask = pd.Series([True] * len(info), index=info.index)
 
-        # Apply filters based on the dictionary
-        for column, value in filtered_dict.items():
-            mask &= info[column].str.contains(value, case=False)
+            # Apply filters based on the dictionary
+            for column, value in filtered_dict.items():
+                mask &= info[column].str.contains(value, case=False)
 
-        # Use the boolean mask to filter the DataFrame
-        info = info[mask]
+            # Use the boolean mask to filter the DataFrame
+            info = info[mask]
+            final_info = info
+        else:
+            form_data = {}
+            for key, value in request.form.items():
+                form_data[key] = value
+                
+            filtered_dict = {key: value for key, value in form_data.items() if value != ""}
+            filtered_dict.popitem()
+            if filtered_dict == {}:
+                flash('Please at least input one information.')
+                return redirect(url_for('search'))
 
-        return render_template('search_result.html', table=info.to_html(index=False))
+            for key, value in filtered_dict.items():
+                info_actor = info_actor[info_actor[key]==value]
+
+            final_info = info_actor
+        return render_template('search_result.html', table=final_info.to_html(index=False))
     return render_template('search.html')
 
 @app.route('/add',methods=["GET","POST"])
