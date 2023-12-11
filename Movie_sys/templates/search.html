@@ -43,8 +43,13 @@
     <label for="actor_country">Actor_country</label>
     <input type="text" name="actor_country" autocomplete="off"><br>
 
-    <input class="btn" type="submit" name="submit_actor" value="Search actor and his/her box info">
+    <input class="btn" type="submit" name="submit_actor" value="Search actor">
 
 </form>
 
+{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    {% set active_page = 'search' %}
 {% endblock %}

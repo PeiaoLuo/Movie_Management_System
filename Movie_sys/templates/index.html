@@ -1,5 +1,10 @@
 {% extends 'base.html' %}
 
+{% block head %}
+    {{ super() }}
+    {% set active_page = 'index' %}
+{% endblock %}
+
 {% block content %}
 
 <table>
@@ -26,3 +31,4 @@
 </table>
     <!--<img alt="Walking Totoro" class="totoro" src="{{ url_for('static', filename='images/totoro.gif') }}" title="to~to~ro~">-->
 {% endblock %}
+

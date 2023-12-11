@@ -72,5 +72,9 @@
 
 </form>
 
+{% endblock %}
 
+{% block head %}
+    {{ super() }}
+    {% set active_page = 'add' %}
 {% endblock %}

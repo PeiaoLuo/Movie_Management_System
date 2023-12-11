@@ -18,10 +18,11 @@
     </h2>
     <nav>
         <ul>
-            <li><a href="{{ url_for('index') }}">Home</a></li>
-            <li><a href="{{ url_for('search') }}">Advanced Search</a></li>
-            <li><a href="{{ url_for('add') }}">Add Movie</a></li>
-            <li><a href="#" onclick="toggleForm()">Delete Movie</a></li>
+            <li><a href="{{ url_for('index') }}" {% if active_page == 'index' %}class="active"{% endif %}>Home</a></li>
+            <li><a href="{{ url_for('search') }}" {% if active_page == 'search' %}class="active"{% endif %}>Search</a></li>
+            <li><a href="{{ url_for('add') }}" {% if active_page == 'add' %}class="active"{% endif %}>Add Movie</a></li>
+            <li><a href="{{ url_for('analysis') }}" {% if active_page == 'analysis' %}class="active"{% endif %}>Box Analysis</a></li>
+            <li><a href="#" onclick="toggleForm()">Delete Movie</a></li>            
         </ul>
     </nav>
     

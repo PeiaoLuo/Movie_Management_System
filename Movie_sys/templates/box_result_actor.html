@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <style>
+        .container {
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        .analysis-section {
+            margin-bottom: 20px;
+        }
+
+        .data-table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .data-table th, .data-table td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .green-text {
+            color: green;
+        }
+
+        .red-text {
+            color: red;
+        }
+    </style>
+
+    <div class="container">
+        <h3>Actor Box Analysis</h3>
+        <h3>{{ actor_name }}</h3>
+
+        {% if directed_movies %}
+            <div class="analysis-section">
+                <h4>Directed Movies</h4>
+                <table class="data-table">
+                    <tr>
+                        <th>Average</th>
+                        <th>Variance</th>
+                    </tr>
+                    <tr>
+                        <td>{{ directed_dict['avg'] }}</td>
+                        <td>{{ directed_dict['var'] }}</td>
+                    </tr>
+                </table>
+                <p>{{ directed_movies | safe }}</p>
+                <p>
+                    Expectation: {% if high_avg_directed == 1 %}<span class="green-text">Higher</span>{% else %}<span class="red-text">Lower</span>{% endif %}
+                    Volatility: {% if high_var_directed == 1 %}<span class="red-text">Higher</span>{% else %}<span class="green-text">Lower</span>{% endif %}
+                </p>
+            </div>
+        {% endif %}
+
+        {% if acted_movies %}
+            <div class="analysis-section">
+                <h4>Acted Movies</h4>
+                <table class="data-table">
+                    <tr>
+                        <th>Average</th>
+                        <th>Variance</th>
+                    </tr>
+                    <tr>
+                        <td>{{ acted_dict['avg'] }}</td>
+                        <td>{{ acted_dict['var'] }}</td>
+                    </tr>
+                </table>
+                <p>{{ acted_movies | safe }}</p>
+                <p>
+                    Expectation: {% if high_avg_acted == 1 %}<span class="green-text">Higher</span>{% else %}<span class="red-text">Lower</span>{% endif %}
+                            Volatility: {% if high_var_acted == 1 %}<span class="red-text">Higher</span>{% else %}<span class="green-text">Lower</span>{% endif %}
+                </p>
+            </div>
+        {% endif %}
+        
+        <div class="analysis-section">
+            <h4>Total:</h4>
+            <table class="data-table">
+                <tr>
+                    <th>Average</th>
+                    <th>Variance</th>
+                </tr>
+                <tr>
+                    <td>{{ total_dict['avg'] }}</td>
+                    <td>{{ total_dict['var'] }}</td>
+                </tr>
+            </table>
+            <p>
+                Expectation: {% if high_avg_total == 1 %}<span class="green-text">Higher</span>{% else %}<span class="red-text">Lower</span>{% endif %}
+                        Volatility: {% if high_var_total == 1 %}<span class="red-text">Higher</span>{% else %}<span class="green-text">Lower</span>{% endif %}
+            </p>
+        </div>
+    </div>
+{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    {% set active_page = 'analysis' %}
+{% endblock %}

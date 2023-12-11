@@ -75,53 +75,36 @@ def search():
         movie_info.country, movie_info.type, movie_info.year, movie_box.box;
     """)
     sql_query_actor = text("""
-        SELECT
-            a.actor_id,
-            a.actor_name AS actor_name,
-            a.country AS actor_country,
-            a.gender,
-            GROUP_CONCAT(DISTINCT CASE WHEN mar.relation_type = '导演' THEN m.movie_name END) AS directed_movies,
-            COALESCE(SUM(CASE WHEN mar.relation_type = '导演' THEN mb.box END), 0) AS total_box_directed,
-            COALESCE(SUM(CASE WHEN mar.relation_type = '导演' THEN mb.box END), 0) / COUNT(DISTINCT CASE WHEN mar.relation_type = '导演' THEN m.movie_id END) AS mean_box_directed,
-            COALESCE(VARIANCE(CASE WHEN mar.relation_type = '导演' THEN mb.box END), 0) AS variance_box_directed,
-            GROUP_CONCAT(DISTINCT CASE WHEN mar.relation_type != '导演' THEN m.movie_name END) AS acted_movies,
-            COALESCE(SUM(CASE WHEN mar.relation_type != '导演' THEN mb.box END), 0) AS total_box_acted,
-            COALESCE(SUM(CASE WHEN mar.relation_type != '导演' THEN mb.box END), 0) / COUNT(DISTINCT CASE WHEN mar.relation_type != '导演' THEN m.movie_id END) AS mean_box_acted,
-            COALESCE(VARIANCE(CASE WHEN mar.relation_type != '导演' THEN mb.box END), 0) AS variance_box_acted,
-            COALESCE(SUM(DISTINCT mb.box), 0) AS total_box_all,
-            COALESCE(SUM(DISTINCT mb.box), 0) / COUNT(DISTINCT m.movie_id) AS mean_box_all,
-            COALESCE(VARIANCE(mb.box), 0) AS variance_box_all
-        FROM
-            actor_info a
-        LEFT JOIN
-            movie_actor_relation mar ON a.actor_id = mar.actor_id
-        LEFT JOIN
-            movie_info m ON mar.movie_id = m.movie_id
-        LEFT JOIN
-            movie_box mb ON m.movie_id = mb.movie_id
-        GROUP BY
-            a.actor_id, a.actor_name, a.country, a.gender;
+    SELECT
+        a.actor_name AS actor_name,
+        a.country AS actor_country,
+        a.gender,
+        GROUP_CONCAT(DISTINCT CASE WHEN mar.relation_type = '导演' THEN m.movie_name END) AS directed_movies,
+        GROUP_CONCAT(DISTINCT CASE WHEN mar.relation_type != '导演' THEN m.movie_name END) AS acted_movies
+    FROM
+        actor_info a
+    LEFT JOIN
+        movie_actor_relation mar ON a.actor_id = mar.actor_id
+    LEFT JOIN
+        movie_info m ON mar.movie_id = m.movie_id
+    LEFT JOIN
+        movie_box mb ON m.movie_id = mb.movie_id
+    GROUP BY
+        a.actor_name, a.country, a.gender;
     """)
-    # Execute the query and fetch the result
-    result_proxy = connection.execute(sql_query)
-    result = result_proxy.fetchall()
-    columns = result_proxy.keys()
-
-    result_proxy_actor = connection.execute(sql_query_actor)
-    result_actor = result_proxy_actor.fetchall()
-    columns_actor = result_proxy_actor.keys()
-    # Close the connection
-    connection.close()
-
-    # Convert each RowProxy to a dictionary
-    result = [dict(zip(columns, row)) for row in result]
-    result_actor = [dict(zip(columns_actor, row)) for row in result_actor]
-    
-    info = pd.DataFrame(result).astype(str)
-    info_actor = pd.DataFrame(result_actor).astype(str)
     
     if request.method == "POST":
         if 'submit_movie' in request.form:
+            # Execute the query and fetch the result
+            result_proxy = connection.execute(sql_query)
+            result = result_proxy.fetchall()
+            columns = result_proxy.keys()
+            connection.close()
+            
+            # Convert into dataframe
+            result = [dict(zip(columns, row)) for row in result]
+            info = pd.DataFrame(result).astype(str)
+            
             form_data = {}
             for key, value in request.form.items():
                 form_data[key] = value
@@ -142,7 +125,18 @@ def search():
             # Use the boolean mask to filter the DataFrame
             info = info[mask]
             final_info = info
+            return render_template('search_result.html', table=final_info.to_html(index=False))
         else:
+            #Excute the query
+            result_proxy_actor = connection.execute(sql_query_actor)
+            result_actor = result_proxy_actor.fetchall()
+            columns_actor = result_proxy_actor.keys()
+
+            connection.close()
+            #Convert into dataframe
+            result_actor = [dict(zip(columns_actor, row)) for row in result_actor]
+            info_actor = pd.DataFrame(result_actor).astype(str)
+            
             form_data = {}
             for key, value in request.form.items():
                 form_data[key] = value
@@ -157,7 +151,8 @@ def search():
                 info_actor = info_actor[info_actor[key]==value]
 
             final_info = info_actor
-        return render_template('search_result.html', table=final_info.to_html(index=False))
+            return render_template('actor_result.html', table=final_info.to_html(index=False))
+        
     return render_template('search.html')
 
 @app.route('/add',methods=["GET","POST"])
@@ -343,3 +338,167 @@ def delete():
     db.session.commit()
     flash('Movie deleted')
     return redirect(url_for('index'))
+
+@app.route('/box_analysis',methods=['GET','POST'])
+def analysis():
+    sql_query_all = text("""
+    SELECT
+        movie_info.movie_id,
+        movie_info.movie_name,
+        DATE_FORMAT(movie_info.release_date, '%Y-%m-%d') AS release_date,
+        movie_info.country AS movie_country,
+        movie_info.type,
+        movie_info.year,
+        movie_box.box,
+        actor_info.actor_name,
+        actor_info.country as actor_country,
+        actor_info.gender as sex,
+        movie_actor_relation.relation_type
+    FROM
+        actor_info
+    JOIN
+        movie_actor_relation ON actor_info.actor_id = movie_actor_relation.actor_id
+    JOIN
+        movie_info ON movie_info.movie_id = movie_actor_relation.movie_id
+    JOIN
+        movie_box ON movie_info.movie_id = movie_box.movie_id
+	order by movie_id
+    """)
+    connection = db.engine.connect()
+    result_box = connection.execute(sql_query_all)
+    box = result_box.fetchall()
+    columns_box = result_box.keys()
+    connection.close()
+    #Convert into dataframe
+    box = [dict(zip(columns_box, row)) for row in box]
+    info_box = pd.DataFrame(box).astype(str)
+    info_box['box'] = info_box['box'].astype('float64')
+    info_box['box'] = info_box['box'].round(2)
+    print(info_box)
+    if request.method == "POST":
+        # actor box analysis
+        if 'submit_actor' in request.form:
+            form_data = {}
+            for key, value in request.form.items():
+                form_data[key] = value
+                
+            filtered_dict = {key: value for key, value in form_data.items() if value != ""}
+            filtered_dict.popitem()
+            if filtered_dict == {}:
+                flash('Please at least input one information.')
+                return redirect(url_for('analysis'))
+            
+            new_info = info_box.copy()
+            # print(new_info)
+            # get avg and var group by actor
+            avg_total = new_info[['actor_name','box']].groupby('actor_name').mean()['box'].mean()
+            avg_var_total = new_info[['actor_name','box']].groupby('actor_name').var()['box'].mean()
+            
+            avg_actor = new_info[new_info['relation_type']=="主演"][['actor_name','box']].groupby('actor_name').mean()['box'].mean()
+            avg_var_actor = new_info[new_info['relation_type']=="主演"][['actor_name','box']].groupby('actor_name').var()['box'].mean()
+            
+            avg_director = new_info[new_info['relation_type']=="导演"][['actor_name','box']].groupby('actor_name').mean()['box'].mean()
+            avg_var_director = new_info[new_info['relation_type']=="导演"][['actor_name','box']].groupby('actor_name').var()['box'].mean()
+            
+            # get table and flag of box(higher or lower than avg_total)
+            acted_movies = new_info[(new_info['relation_type']=="主演") & (new_info['actor_name']==filtered_dict['actor_name'])].copy()
+            if acted_movies.empty:
+                acted_movies = None
+            else:
+                acted_movies = acted_movies.iloc[:,1:7].sort_values(by='box',ascending=False)
+                acted_mean = float(acted_movies['box'].mean())
+                acted_var = float(acted_movies['box'].var())
+                acted_dic = {"avg":round(acted_mean,2), "var":round(acted_var,2)}
+                if acted_mean > avg_actor:
+                    acted_avg_higher = 1
+                else:
+                    acted_avg_higher = 0
+                if acted_var > avg_var_actor:
+                    acted_var_higher = 1
+                else:
+                    acted_var_higher = 0
+                acted_movies = acted_movies.to_html(index=False)
+    
+            directed_movies = new_info[(new_info['relation_type']=="导演") & (new_info['actor_name']==filtered_dict['actor_name'])].copy()
+            if directed_movies.empty:
+                if acted_movies is None:
+                    flash('No info of this actor.')
+                    return redirect(url_for('analysis'))
+                else:
+                    directed_movies = None
+            else:
+                directed_movies = directed_movies.iloc[:,1:7].sort_values(by='box',ascending=False)
+                directed_mean = float(directed_movies['box'].mean())
+                directed_var = float(directed_movies['box'].var())
+                directed_dic = {"avg":round(directed_mean,2), "var":round(directed_var,2)}
+                if directed_mean > avg_director:
+                    directed_avg_higher = 1
+                else:
+                    directed_avg_higher = 0
+                if directed_var > avg_var_director:
+                    directed_var_higher = 1
+                else:
+                    directed_var_higher = 0
+                directed_movies = directed_movies.to_html(index=False)
+            
+            its_movies = new_info[new_info['actor_name']==filtered_dict['actor_name']].copy()
+            its_movies = its_movies.iloc[:,1:7].sort_values(by='box',ascending=False)
+            total_mean = float(its_movies['box'].mean())
+            total_var = float(its_movies['box'].var())
+            total_dic = {"avg":round(total_mean,2), "var":round(total_var,2)}
+            if total_mean > avg_total:
+                total_avg_higher = 1
+            else:
+                total_avg_higher = 0
+            if total_var > avg_var_total:
+                total_var_higher = 1
+            else:
+                total_var_higher = 0
+                    
+            return render_template('box_result_actor.html',actor_name=filtered_dict['actor_name'],directed_movies=directed_movies,acted_movies=acted_movies,
+                                   high_avg_directed=directed_avg_higher,high_var_directed=directed_var_higher,high_avg_acted=acted_avg_higher,high_var_acted=acted_var_higher,
+                                   high_avg_total=total_avg_higher, high_var_total=total_var_higher,
+                                    acted_dict=acted_dic, directed_dict=directed_dic, total_dict=total_dic)
+        # type box analysis
+        else:
+            form_data = {}
+            for key, value in request.form.items():
+                form_data[key] = value
+                
+            filtered_dict = {key: value for key, value in form_data.items() if value != ""}
+            filtered_dict.popitem()
+            if filtered_dict == {}:
+                flash('Please at least input one information.')
+                return redirect(url_for('analysis'))
+            
+            new_info = info_box.iloc[:,1:7].copy().drop_duplicates()
+            # print(new_info)
+            # get avg and var group by type
+            
+            avg_type = new_info[['type','box']].groupby('type').mean()['box'].mean()
+            avg_var_type = new_info[['type','box']].groupby('type').var()['box'].mean()
+            
+            # get table and flag of box(higher or lower than avg_total)
+            type_movies = new_info[new_info['type']==filtered_dict['type']].copy()
+            if type_movies.empty:
+                flash('No info of this type.')
+                return redirect(url_for('analysis'))
+            else:
+                type_movies = type_movies.sort_values(by='box',ascending=False)
+                type_mean = float(type_movies['box'].mean())
+                type_var = float(type_movies['box'].var())
+                type_dic = {"avg":round(type_mean,2), "var":round(type_var,2)}
+                if type_mean > avg_type:
+                    type_avg_higher = 1
+                else:
+                    type_avg_higher = 0
+                if type_var > avg_var_type:
+                    type_var_higher = 1
+                else:
+                    type_var_higher = 0
+                type_movies = type_movies.to_html(index=False)
+    
+            return render_template('box_result_type.html',type=filtered_dict['type'],type_dict=type_dic,type_movies=type_movies,
+                                   high_avg_type=type_avg_higher, high_var_type=type_var_higher)
+    
+    return render_template('box.html')

@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+    label {
+        display: inline-block;
+        width: 120px; /* Adjust the width as needed */
+    }
+
+    input {
+        margin-bottom: 10px; /* Adjust the spacing between input boxes */
+    }
+</style>
+
+<form method="post">
+    <label for="actor_name">Actor</label>
+    <input type="text" name="actor_name" autocomplete="off"><br>
+
+    <input class="btn" type="submit" name="submit_actor" value="Analyze by actor">
+
+</form>
+
+<form method="post">
+    <label for="type">Type of movie</label>
+    <input type="text" name="type" autocomplete="off"><br>
+
+    <input class="btn" type="submit" name="submit_type" value="Analyze by type">
+
+</form>
+
+{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    {% set active_page = 'analysis' %}
+{% endblock %}

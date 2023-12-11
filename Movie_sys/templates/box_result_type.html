@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <style>
+        .container {
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        .analysis-section {
+            margin-bottom: 20px;
+        }
+
+        .data-table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .data-table th, .data-table td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .green-text {
+            color: green;
+        }
+
+        .red-text {
+            color: red;
+        }
+    </style>
+
+    <div class="container">
+        <h3>Type Box Analysis</h3>
+        <h3>{{ type }}</h3>
+
+        <div class="analysis-section">
+            <h4>Movies</h4>
+            <table class="data-table">
+                <tr>
+                    <th>Average</th>
+                    <th>Variance</th>
+                </tr>
+                <tr>
+                    <td>{{ type_dict['avg'] }}</td>
+                    <td>{{ type_dict['var'] }}</td>
+                </tr>
+            </table>
+            <p>{{ type_movies | safe }}</p>
+            <p>
+                Expectation: {% if high_avg_type == 1 %}<span class="green-text">Higher</span>{% else %}<span class="red-text">Lower</span>{% endif %}
+                Volatility: {% if high_var_type == 1 %}<span class="red-text">Higher</span>{% else %}<span class="green-text">Lower</span>{% endif %}
+            </p>
+        </div>
+    </div>
+{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    {% set active_page = 'analysis' %}
+{% endblock %}

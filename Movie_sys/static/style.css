@@ -12,7 +12,7 @@ body {
 }
 
 h2 {
-    color: #007bff;
+    color: #4d4d4d; /* Darker brown */
     margin-left: 50px;
     margin-right: auto;
     margin-top: 20px;
@@ -49,10 +49,28 @@ nav a {
     padding: 15px 20px;
     color: #fff;
     text-decoration: none;
+    border-bottom: 2px solid transparent; /* Initially no border */
 }
 
 nav a:hover {
     background-color: #555;
+}
+
+nav a.active {
+    border-bottom-color: #fff; /* Highlight color for active link */
+    background-color: #555; /* Highlight background color for active link */
+}
+
+/* Additional styles for the current page */
+nav a.current {
+    border-bottom-color: #fff; /* Highlight color for active link on the current page */
+    background-color: #555; /* Highlight background color for active link on the current page */
+}
+
+/* Adjust the hover effect for the active link */
+nav a.active:hover,
+nav a.current:hover {
+    background-color: #555; /* Maintain hover effect for active link on the current page */
 }
 
 .hidden-form {
@@ -101,6 +119,7 @@ table {
     margin-top: 20px;
     margin-left: auto;
     margin-right: auto;
+    border-radius: 10px; /* Rounded corners */
 }
 
 th, td {
@@ -110,8 +129,16 @@ th, td {
 }
 
 th {
-    background-color: #007bff;
+    background-color: #4d4d4d; /* Darker brown for headers */
     color: #fff;
+}
+
+tr:nth-child(even) {
+    background-color: #d9ccb3; /* Lighter brown for even rows */
+}
+
+tr:nth-child(odd) {
+    background-color: #e6d8c2; /* Even lighter brown for odd rows */
 }
 
 footer {
